@@ -17,18 +17,25 @@ Four samples are analysed: two biological replicates each for wildtype (`WT_Rep1
 
 ```
 rna-seq/
-├── 01_preprocessing/       # Quality control and adapter trimming scripts
-├── 02_contamination/       # Removal of undesired RNAs (rRNA, tRNA, snoRNA, snRNA)
-├── 03_mapping/             # Genome and transcriptome alignment
-├── 04_qc_alignment/        # Alignment quality control (reading frame analysis)
-├── 05_read_counting/       # Read count tables per gene and biotype
-├── 06_differential_expression/  # DESeq2-based differential expression analysis
-├── 07_gene_ontology/       # Gene Ontology enrichment analysis
-├── 08_codon_occupancy/     # A-site codon occupancy analysis
+├── scripts/
+│   ├── 0_download_sra.slurm            # Download raw reads from SRA
+│   ├── 1_fast_qc.slurm                 # Pre-processing quality control (FastQC)
+│   ├── 2_preprocessing.slurm           # Adapter trimming (Cutadapt)
+│   ├── 3_get_indices.slurm             # Build Bowtie indices for contaminant & genome references
+│   ├── 4_remove_unwantedRNA.slurm      # Remove contaminant RNAs (rRNA, tRNA, snoRNA, snRNA)
+│   ├── 5_fastqc_postprocessing.slurm   # Post-trimming quality control (FastQC)
+│   ├── 6_genome_mapping.slurm          # Align reads to human genome (GRCh38)
+│   ├── 7_DESeq_counts.slurm            # Generate count tables & run DESeq2 + Gene Ontology
+│   ├── 8_transcriptome_mapping.slurm   # Align reads to human transcriptome
+│   ├── 9_Codon_Occupancy.sh            # A-site codon occupancy analysis
+│   ├── 10_cleanup.slurm                # Remove intermediate files
+│   ├── Codon_occupancy_cal.sh          # Codon occupancy calculation helper
+│   ├── module.sh                       # Environment module loader
+│   ├── module2.sh                      # Environment module loader (alternative)
+│   ├── samples.txt                     # Sample IDs list
+│   └── samples_name.txt                # Sample display names
 └── README.md
 ```
-
-> **Note:** Adjust folder names above to match the actual structure of your repository.
 
 ---
 
@@ -158,7 +165,16 @@ Processed reads were additionally mapped to the annotated human transcriptome (e
 
 ## Usage
 
-Each numbered directory contains scripts for its respective analysis step. Scripts are intended to be run in order. See the comments within each script for parameter details and expected input/output files.
+All scripts live in the `scripts/` folder and are numbered to reflect execution order. They are written as SLURM batch scripts (`.slurm`) for HPC cluster submission, with the exception of the codon occupancy steps which are plain bash (`.sh`). Run them sequentially:
+
+```bash
+sbatch scripts/0_download_sra.slurm
+sbatch scripts/1_fast_qc.slurm
+sbatch scripts/2_preprocessing.slurm
+# ... and so on through 10_cleanup.slurm
+```
+
+Sample IDs and names are defined in `scripts/samples.txt` and `scripts/samples_name.txt`. Module loading for HPC environments is handled by `module.sh` and `module2.sh`.
 
 ---
 
